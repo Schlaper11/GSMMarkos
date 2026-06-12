@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mehrere Audiodateien laden</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      max-width: 720px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      margin: 0.4rem 0;
+    }
+
+    button {
+      width: 100%;
+      text-align: left;
+      padding: 0.6rem;
+      cursor: pointer;
+    }
+
+    #nowPlaying {
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Audio-Player</h1>
+  <p>Mehrere Audiodateien auswählen und durch Klicken sofort abspielen.</p>
+
+  <input id="audioInput" type="file" accept="audio/*" multiple />
+  <ul id="audioList"></ul>
+  <p id="nowPlaying">Aktuell: nichts</p>
+
+  <audio id="player" controls preload="metadata"></audio>
+
+  <script>
+    const input = document.getElementById('audioInput');
+    const list = document.getElementById('audioList');
+    const player = document.getElementById('player');
+    const nowPlaying = document.getElementById('nowPlaying');
+
+    let fileEntries = [];
+
+    const clearUrls = () => {
+      fileEntries.forEach((entry) => URL.revokeObjectURL(entry.url));
+      fileEntries = [];
+    };
+
+    input.addEventListener('change', () => {
+      clearUrls();
+      list.innerHTML = '';
+
+      const files = Array.from(input.files || []);
+
+      files.forEach((file) => {
+        const url = URL.createObjectURL(file);
+        const entry = { name: file.name, url };
+        fileEntries.push(entry);
+
+        const item = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = entry.name;
+
+        button.addEventListener('click', async () => {
+          if (player.src !== entry.url) {
+            player.src = entry.url;
+          }
+
+          try {
+            await player.play();
+            nowPlaying.textContent = `Aktuell: ${entry.name}`;
+          } catch {
+            nowPlaying.textContent = `Konnte ${entry.name} nicht automatisch starten.`;
+          }
+        });
+
+        item.appendChild(button);
+        list.appendChild(item);
+      });
+
+      if (files.length === 0) {
+        nowPlaying.textContent = 'Aktuell: nichts';
+      }
+    });
+
+    window.addEventListener('beforeunload', clearUrls);
+  </script>
+</body>
+</html>
